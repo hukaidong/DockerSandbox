@@ -1,0 +1,24 @@
+#%Module1.0
+
+proc ModulesHelp { } {
+    puts stderr "This module sets up Python environment using uv"
+}
+
+module-whatis "Sets up Python environment using uv"
+
+# Set up environment variables for uv
+prepend-path PATH "$::env(HOME)/.cargo/bin"
+
+# Define aliases
+set-alias "python-venv" "uv venv"
+set-alias "python-install" "uv pip install"
+set-alias "python-uninstall" "uv pip uninstall"
+set-alias "python-list" "uv pip list"
+set-alias "python-freeze" "uv pip freeze"
+
+# Help message
+if { [ module-info mode load ] } {
+    puts stdout "Python environment with uv is now available."
+    puts stdout "Use 'python-venv <env_name>' to create a new virtual environment."
+    puts stdout "Use 'uv pip install <package>' to install packages."
+} 

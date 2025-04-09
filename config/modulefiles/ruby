@@ -1,0 +1,47 @@
+#%Module1.0
+##
+## rbenv module file
+##
+## Adds rbenv to your PATH for Ruby version management
+##
+
+# Get the current user's home directory
+set home $::env(HOME)
+
+# Define where Homebrew installs rbenv
+set brewPrefix [exec /usr/bin/env bash -c "brew --prefix rbenv 2>/dev/null || echo /opt/homebrew/opt/rbenv"]
+
+# Check if rbenv is installed via Homebrew
+if {![file exists $brewPrefix]} {
+    puts stderr "Error: rbenv installation not found at $brewPrefix"
+    break
+}
+
+# Set environment variables
+setenv RBENV_ROOT $brewPrefix
+
+# Modify PATH to include rbenv and shims
+prepend-path PATH $brewPrefix/bin
+
+# Initialize rbenv (equivalent to 'eval "$(rbenv init -)"')
+if {[file exists $brewPrefix/bin/rbenv]} {
+    set init_cmd [exec $brewPrefix/bin/rbenv init - --no-rehash]
+    foreach line [split $init_cmd "\n"] {
+        if {[string match "export PATH=*" $line]} {
+            set path_val [lindex [split $line "="] 1]
+            # Remove quotes if present
+            set path_val [string trim $path_val "\"'"]
+            prepend-path PATH $path_val
+        } elseif {[string match "export RBENV_SHELL=*" $line]} {
+            set shell_val [lindex [split $line "="] 1]
+            # Remove quotes if present
+            set shell_val [string trim $shell_val "\"'"]
+            setenv RBENV_SHELL $shell_val
+        }
+    }
+}
+
+# Display module info when loaded
+if { [module-info mode load] } {
+    puts stdout "rbenv has been loaded."
+}

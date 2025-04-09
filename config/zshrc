@@ -1,0 +1,43 @@
+# Path to your oh-my-zsh installation.
+export ZSH="$HOME/.oh-my-zsh"
+
+# Set name of the theme to load
+ZSH_THEME="robbyrussell"
+
+# Enable plugins
+plugins=(
+  git
+  docker
+  docker-compose
+  zsh-autosuggestions
+  zsh-syntax-highlighting
+)
+
+source $ZSH/oh-my-zsh.sh
+
+# User configuration
+export LANG=en_US.UTF-8
+export EDITOR='nvim'
+
+# Homebrew
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
+# Environment modules
+source /etc/profile.d/modules.sh
+module use $HOME/modulefiles
+
+# uv for Python management
+export PATH="$HOME/.cargo/bin:$PATH"
+
+# Bun for NodeJS
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# Aliases
+alias vim="nvim"
+alias vi="nvim"
+alias ls="ls --color=auto"
+alias ll="ls -la"
+
+# Add custom bin directory to PATH
+export PATH="$HOME/bin:$PATH"
