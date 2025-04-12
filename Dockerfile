@@ -103,10 +103,10 @@ RUN mkdir -p /home/$USERNAME/bin \
     && ln -s $(which fdfind) /home/$USERNAME/bin/fd
 
 # Install Mason dependencies for LSP support
-RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && brew install \
-    npm \
-    python3 \
-    && npm install -g tree-sitter-cli
+RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
+    && brew install npm python3 \
+    && nvim --headless +PackerInstall +qall
+
 
 # Set zsh as default shell
 USER root
