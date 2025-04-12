@@ -5,24 +5,18 @@ FROM ubuntu:latest
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
+# Define package groups as environment variables
+ENV COMMON_DEPS="sudo locales ca-certificates apt-transport-https gnupg lsb-release unzip wget"
+ENV BUILD_DEPS="build-essential software-properties-common ncurses-dev file curl"
+ENV HOMEBREW_DEPS="git"
+ENV EDITOR_DEPS="fonts-powerline fd-find ripgrep"
+
 # Install basic dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    file \
-    wget \
-    sudo \
-    locales \
-    ncurses-dev \
-    ca-certificates \
-    apt-transport-https \
-    software-properties-common \
-    gnupg \
-    unzip \
-    lsb-release \
-    fonts-powerline \
-    fd-find \
-    ripgrep \
+    $COMMON_DEPS \
+    $BUILD_DEPS \
+    $HOMEBREW_DEPS \
+    $EDITOR_DEPS \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up locale
@@ -54,9 +48,12 @@ RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/instal
 RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && brew install git zsh
 
 # Install Oh My Zsh
-RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
+RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
+    && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
     && git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions \
     && git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+
+COPY --chown=$USERNAME:$USERNAME ./config/zshrc /home/$USERNAME/.zshrc
 
 # Install Neovim using Homebrew
 RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && brew install neovim
@@ -64,12 +61,14 @@ RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && brew install neovi
 # Install language version managers and tools
 # Install uv for Python
 RUN curl -fsSL https://astral.sh/uv/install.sh | sh \
-    && echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.zshrc
+    && echo '# uv for Python Management' >> ~/.zshrc \
+    && echo 'export PATH="$HOME/.cargo/bin:$PATH"' "\n" >> ~/.zshrc \
 
 # Install Bun
 RUN curl -fsSL https://bun.sh/install | bash \
+    && echo '# Bun for JavaScript/TypeScript' >> ~/.zshrc \
     && echo 'export BUN_INSTALL="$HOME/.bun"' >> ~/.zshrc \
-    && echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> ~/.zshrc
+    && echo 'export PATH="$BUN_INSTALL/bin:$PATH"' "\n" >> ~/.zshrc
 
 # Install rbenv and ruby-build
 RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
@@ -78,8 +77,9 @@ RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
 # Install jenv for Java support
 RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
     && brew install jenv \
+    && echo '# jenv for Java Management' >> ~/.zshrc \
     && echo 'export PATH="$HOME/.jenv/bin:$PATH"' >> ~/.zshrc \
-    && echo 'eval "$(jenv init -)"' >> ~/.zshrc \
+    && echo 'eval "$(jenv init -)"' "\n" >> ~/.zshrc \
     && mkdir -p ~/.jenv/versions
     
 # Create directories for config files if they don't exist
@@ -90,7 +90,6 @@ RUN git clone https://github.com/nvim-lua/kickstart.nvim.git /home/$USERNAME/.co
     && rm -rf /home/$USERNAME/.config/nvim/.git
 
 # Copy configuration files
-COPY --chown=$USERNAME:$USERNAME ./config/zshrc /home/$USERNAME/.zshrc
 COPY --chown=$USERNAME:$USERNAME ./config/welcome.sh /home/$USERNAME/welcome.sh
 
 # Make welcome script executable
@@ -111,12 +110,13 @@ RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
 
 # Set zsh as default shell
 USER root
-RUN chsh -s $(which zsh) $USERNAME
+RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
+    && chsh -s $(which zsh) $USERNAME
 
 # Switch back to non-root user
 USER $USERNAME
 WORKDIR /home/$USERNAME
 
 # Default command
-CMD ["/bin/zsh", "-l"]
+CMD ["/home/linuxbrew/.linuxbrew/bin/zsh"]
 

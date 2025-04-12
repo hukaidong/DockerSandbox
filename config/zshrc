@@ -7,8 +7,6 @@ ZSH_THEME="robbyrussell"
 # Enable plugins
 plugins=(
   git
-  docker
-  docker-compose
   zsh-autosuggestions
   zsh-syntax-highlighting
 )
@@ -21,17 +19,6 @@ export EDITOR='nvim'
 
 # Homebrew
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-
-# Environment modules
-source /etc/profile.d/modules.sh
-module use $HOME/modulefiles
-
-# uv for Python management
-export PATH="$HOME/.cargo/bin:$PATH"
-
-# Bun for NodeJS
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
 
 # Aliases
 alias vim="nvim"
