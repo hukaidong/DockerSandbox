@@ -10,9 +10,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     file \
-    git \
     wget \
-    zsh \
     sudo \
     locales \
     ncurses-dev \
@@ -23,7 +21,6 @@ RUN apt-get update && apt-get install -y \
     unzip \
     lsb-release \
     fonts-powerline \
-    environment-modules \
     fd-find \
     ripgrep \
     && rm -rf /var/lib/apt/lists/*
@@ -53,6 +50,9 @@ RUN /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/instal
     && echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.zshrc \
     && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
+# Install Git and Zsh from Homebrew
+RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" && brew install git zsh
+
 # Install Oh My Zsh
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
     && git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions \
@@ -71,14 +71,19 @@ RUN curl -fsSL https://bun.sh/install | bash \
     && echo 'export BUN_INSTALL="$HOME/.bun"' >> ~/.zshrc \
     && echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> ~/.zshrc
 
-# Install rbenv and ruby-build, dedicate rbenv setup to environment modules
+# Install rbenv and ruby-build
 RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
-    && brew install rbenv ruby-build \
-    && brew unlink rbenv
+    && brew install rbenv ruby-build 
+
+# Install jenv for Java support
+RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
+    && brew install jenv \
+    && echo 'export PATH="$HOME/.jenv/bin:$PATH"' >> ~/.zshrc \
+    && echo 'eval "$(jenv init -)"' >> ~/.zshrc \
+    && mkdir -p ~/.jenv/versions
     
 # Create directories for config files if they don't exist
-RUN mkdir -p /home/$USERNAME/.config/nvim \
-    && mkdir -p /home/$USERNAME/modulefiles
+RUN mkdir -p /home/$USERNAME/.config/nvim 
 
 # Set up kickstart.nvim
 RUN git clone https://github.com/nvim-lua/kickstart.nvim.git /home/$USERNAME/.config/nvim \
@@ -86,14 +91,10 @@ RUN git clone https://github.com/nvim-lua/kickstart.nvim.git /home/$USERNAME/.co
 
 # Copy configuration files
 COPY --chown=$USERNAME:$USERNAME ./config/zshrc /home/$USERNAME/.zshrc
-COPY --chown=$USERNAME:$USERNAME ./config/modulefiles /home/$USERNAME/modulefiles
 COPY --chown=$USERNAME:$USERNAME ./config/welcome.sh /home/$USERNAME/welcome.sh
 
 # Make welcome script executable
 RUN chmod +x /home/$USERNAME/welcome.sh
-
-# Setup environment modules
-RUN echo 'module use $HOME/modulefiles' >> ~/.zshrc
 
 # Add welcome script to .zshrc
 RUN echo 'source $HOME/welcome.sh' >> ~/.zshrc
@@ -105,8 +106,8 @@ RUN mkdir -p /home/$USERNAME/bin \
 # Install Mason dependencies for LSP support
 RUN eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
     && brew install npm python3 \
-    && nvim --headless +PackerInstall +qall
-
+    && nvim --headless +PackerInstall +qall \
+    && nvim --headless +qall
 
 # Set zsh as default shell
 USER root
